@@ -1,0 +1,3 @@
+cubbie: 1
+network:
+  runtime: ["*.trycloudflare.com", "*.onrender.com"]  # the team's Group Cubbie server (tunnel or Render)

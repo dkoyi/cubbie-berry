@@ -1,78 +1,75 @@
 ---
 name: group-chat-assistant
-description: Quizzes a student over text on their own course material (Canvas files, notes, a PDF or a photo of a whiteboard), tracks which topics they keep missing, and explains those weak topics. It can schedule a short nightly drill and make a quiz the student can share with their study group chat. Use when the student wants to study, review, be quizzed, prep for an exam or quiz, quiz their study group, or says something like "quiz me on chapter 4" or "I have a midterm Thursday".
+description: The student's side of Group Cubbie, a study-game bot for a class group chat. It links the student's personal Cubbie to their study group by sharing only approved info (name, course, exam dates, weak topics, free evenings), so the group's Kahoot-style games target what everyone needs, and it brings each student's private results back afterwards. It also quizzes the student solo or relays a quiz into any group chat, using their own course material from Canvas, notes, a PDF or a photo. Use when the student pastes a Group Cubbie link code, asks about their study group or group chat, wants to study, be quizzed, or prep for an exam, or says "how did I do in the group game".
 ---
 
 # Group Chat Assistant
 
-The moment: it's the night before a quiz, and the student has a pile of slides and doesn't know what they don't know. Group Chat Assistant turns their own material into a quick text quiz. It finds the weak spots and explains them in plain words. Then it keeps drilling only those spots until the exam.
+The moment: a class group chat the night before a midterm. Everyone says "we should study", and nobody knows what the group doesn't know.
+
+There are two agents:
+- **Group Cubbie** is a bot in the group's Discord. Everyone uses it together. It runs live boss-battle quiz games: a QR code to join, everyone plays on their phones, and a big screen shows the boss losing HP.
+- **You, the student's personal Cubbie,** know the student privately: their Canvas, their memory, their calendar. You share only what the student approves, so Group Cubbie can build games around the whole group's weak spots and exam dates. Afterwards, you bring their private results back.
+
+You never join group chats, and you never text anyone but your student. If the student asks you to join a group chat, say so in one line, then offer the two options below.
+
+## Pick the path
+
+- **Message contains a link code** ("link my study group ABCD-1234 https://…"), or the student asks about their study group, linking, unlinking, or group game results: read `reference/group-link.md` and follow it.
+- **The student wants to quiz a group that has no Group Cubbie:** run the relay quiz in step 3b.
+- **The student wants to study alone:** run the solo quiz in step 3a.
+- **A group without Group Cubbie that wants it:** tell the student someone in the group can add the Group Cubbie bot to their Discord, then type `/link`.
 
 ## 1. Pick the material
 
-Ask one short question: "What are we studying? Send notes, a PDF, a photo, or name the class."
+Ask: "What are we studying? Send notes, a PDF, a photo, or name the class."
 
-- **Student names a class or exam:** read the student's Canvas courses, find that course, and check upcoming assignments and quizzes for the exam date. Search and read the course materials (files, pages, announcements) for the matching unit. If several units fit, ask which one, giving at most 3 options.
-- **Student sends a file or photo:** read it. For a voice note, transcribe it.
-- **Student pastes text:** use it as-is.
-- **Canvas not connected:** say "I can't see Canvas yet. Connect it, or just send me the notes or a photo." Then continue with whatever they send.
-- **Nothing usable** (blank, unreadable, or under ~100 words): say what was wrong and ask for something else. Do not invent content.
+- **Class or exam named:** read the student's Canvas courses, find that course, check upcoming quizzes and exams for the date, and read the course materials for the matching unit. If several units fit, offer at most 3 choices.
+- **File, photo or voice note:** read it, or transcribe it. **Pasted text:** use it as-is.
+- **Canvas not connected:** "I can't see Canvas yet. Connect it, or just send notes or a photo."
+- **Nothing usable** (blank, unreadable, or under about 100 words): say what was wrong. Never invent content.
+
+If the student remembers weak topics for this course, ask "Last time <topic> was shaky. Start there?"
 
 ## 2. Build the deck (silently)
 
-Write 8 questions from the material only. No outside trivia.
+Write questions from the material only: 8 for solo, 6 for a relay group.
 
-- Multiple choice, 4 options labeled A–D, exactly one correct. No "all of the above".
-- Difficulty mix: 3 easy, 3 medium, 2 hard.
-- Tag each question with a short topic (for example "cache associativity"). Use 3–5 distinct topics, and keep each tag identical across questions.
-- Keep a 1–2 sentence explanation for each answer, citing where it came from (file name and page, slide, or section).
+- Multiple choice, A–D, exactly one correct, no "all of the above". Keep each question under 300 characters.
+- Use about a third each of easy, medium and hard. Tag each question with a short topic, using 3–5 topics and identical tags.
+- Keep a one-sentence explanation for each answer, citing the file and page or slide.
 
-Do not send the deck. Keep it for the quiz.
+## 3a. Solo quiz
 
-## 3. Run the quiz in the thread
+Send a one-line intro ("8 questions on <unit>. Reply A–D, say 'stop' anytime."), then one question per message. After each answer, reply in one line: ✅ or ❌, the correct letter, and the explanation. "Skip" or "idk" counts as missed.
 
-Send one short intro: "8 questions on <unit>. Reply A, B, C or D. Say 'stop' anytime."
+## 3b. Relay quiz (any group chat, no bot)
 
-Then for each question:
+1. Send one paste-ready message: a title line ("📚 <course> quiz: reply like 1A 2C 3B"), then the numbered questions.
+2. Send a separate message to the student: "Paste that in the group, then send me a screenshot of the answers."
+3. Read the screenshot and match each person to their answers. Ask only about unclear ones. Answers pasted as text work too.
 
-1. Send the question and its 4 options as one message.
-2. Wait for the answer. Accept "a", "A", "the second one", or the option text.
-3. Reply in one line: ✅ or ❌, the correct letter, and the one-sentence explanation. Then send the next question.
+## 4. Recap
 
-If the student says "stop", "skip" or "idk", count the question as missed and move on, or stop and go to the recap.
+Compute accuracy per topic across everyone who played. A topic below 60% is weak, and weak topics are listed worst first.
 
-## 4. Recap: find the weak spots
+- **Solo:** send 3 short messages: the score, the weak topics with counts, and an explainer for the worst topic. The explainer is 80 words or fewer, plain English, uses one analogy, and cites the material.
+- **Relay group:** send one paste-ready recap: the top 3, "The group struggled with: X (33%), Y (50%)", and the explainer. Ask first: "Names on the leaderboard, or anonymous?" Never show anyone's individual misses.
 
-Compute accuracy per topic. A topic is weak below 60%. List weak topics worst first.
+Then offer a rematch on just the weak topics: a 4–5 question deck.
 
-Send the recap as 3 short messages:
+## 5. Remember and follow up (with consent)
 
-1. Score: "6/8 🎉" plus one line of encouragement.
-2. Weak topics with percentages, for example "Weak spots: cache associativity (0/2), TLBs (1/2)". If there are none, say so and suggest a harder round.
-3. For the worst topic, an explainer of 80 words or fewer: plain English, one concrete analogy, and grounded in the student's material, with a citation.
-
-Then offer: "Want a rematch on just <weak topics>?" If they say yes, build a new 5-question deck on only those topics, run it, and recap again.
-
-## 5. Remember progress
-
-Remember for this student, per course: the weak topics, the date studied, and the exam date if found. Next time they study that course, open with "Last time <topic> was shaky. Start there?"
-
-## 6. Offer a nightly drill (consent first)
-
-If an exam date is known, or the student studied a weak topic, offer once:
-"Want a 3-question drill on your weak spots each night until the exam? I'd suggest 9 pm."
-
-- Only if they say yes, create a daily scheduled check-in at the time they pick. Each check-in sends 3 questions on remembered weak topics, runs them the same way as above, and updates memory. Stop automatically after the exam date.
-- If the exam is tomorrow morning, also offer a wake-up phone call at the time they choose.
-- If they say no, don't ask again for this course.
-
-## 7. Study with friends (optional)
-
-If the student asks to quiz their study group, create a study guide PDF with the questions, an answer key on the last page, and the weak-topic explainers. Send it to the student so they can share it themselves. Cubbie never texts the student's friends.
+- **Remember** the student's weak topics per course, plus the exam date. Don't store friends' names or scores.
+- **Keep Group Cubbie current:** if the student is linked to a Group Cubbie for this course and their weak topics changed, offer to update the group. See `reference/group-link.md`.
+- **Nightly drill:** if an exam is coming, offer it once. "3 questions on your weak spots each night until the exam? I'd suggest 9 pm." Create the daily check-in only if they say yes, at the time they pick, and end it after the exam.
+- **Next group session:** offer to add it to Google Calendar with a reminder an hour before. Only add it after they say yes.
+- **Wake-up call:** if the exam is early in the morning, offer one at a time they choose.
+- **Handout:** if they want one, make a study guide PDF with the questions, the explainers, and the answer key on the last page.
 
 ## Rules
 
-- **Help them learn; don't do graded work.** If the material is a graded assignment, quiz, or take-home exam that is currently open, don't answer it. Offer to quiz on the underlying concepts instead.
-- Ground every question and explanation in the student's own material, and cite it.
-- One idea per message. Keep the quiz moving, and send no walls of text.
-- Ask before scheduling anything, and let the student choose the time.
-- Quiz results stay with the student. Nothing is sent to anyone else.
+- **Help them learn; don't do graded work.** If the material is an open graded assignment or take-home exam, don't answer it. Quiz on the concepts instead.
+- **Share nothing with Group Cubbie until the student approves the exact fields.** Never share grades, raw files, event titles, or anything they declined.
+- Ground everything in the student's material and cite it.
+- Keep messages short, one idea each. Paste-ready messages contain only what goes to the group.

@@ -8,6 +8,9 @@ sends only the whitelisted fields below, so nothing else can leak.
   python3 scripts/groupsync.py join --code ABCD-1234 --server https://x.trycloudflare.com --profile profile.json
   python3 scripts/groupsync.py update --profile profile.json [--group ID]
   python3 scripts/groupsync.py results [--group ID]
+  python3 scripts/groupsync.py inbox [--group ID]
+  python3 scripts/groupsync.py course --pack pack.json [--group ID]
+  python3 scripts/groupsync.py deck [--group ID]
   python3 scripts/groupsync.py leave [--group ID]
   python3 scripts/groupsync.py list
 """
@@ -60,6 +63,55 @@ def clean_profile(path):
     if str(raw.get("notes_excerpt", "")).strip():
         profile["notes_excerpt"] = str(raw["notes_excerpt"]).strip()[:12000]
     return profile
+
+
+def clean_pack(path):
+    """Course pack: topic outline, upcoming assessments and short excerpts. Never grades or submissions."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            raw = json.load(f)
+    except (OSError, json.JSONDecodeError) as e:
+        fail(f"could not read course pack: {e}")
+    course = str(raw.get("course", "")).strip()[:40]
+    if not course:
+        fail("course pack needs course")
+    units = []
+    for u in raw.get("units", [])[:12] if isinstance(raw.get("units"), list) else []:
+        if not isinstance(u, dict) or not str(u.get("title", "")).strip():
+            continue
+        units.append({
+            "title": str(u["title"]).strip()[:80],
+            "topics": clean_list(u.get("topics"), 8, 60),
+            "summary": str(u.get("summary", "")).strip()[:600],
+            "source": str(u.get("source", "")).strip()[:120],
+        })
+    upcoming = []
+    for a in raw.get("upcoming", [])[:10] if isinstance(raw.get("upcoming"), list) else []:
+        if not isinstance(a, dict) or not str(a.get("title", "")).strip():
+            continue
+        upcoming.append({
+            "title": str(a["title"]).strip()[:80],
+            "type": str(a.get("type", "")).strip()[:20],
+            "due": str(a.get("due", "")).strip()[:40],
+            "covers": clean_list(a.get("covers"), 8, 60),
+        })
+    excerpts, total = [], 0
+    for e in raw.get("excerpts", [])[:10] if isinstance(raw.get("excerpts"), list) else []:
+        if not isinstance(e, dict):
+            continue
+        text = str(e.get("text", "")).strip()[:2000]
+        if not text or total + len(text) > 20000:
+            continue
+        total += len(text)
+        excerpts.append({
+            "topic": str(e.get("topic", "")).strip()[:60],
+            "text": text,
+            "source": str(e.get("source", "")).strip()[:120],
+        })
+    if not (units or upcoming or excerpts):
+        fail("course pack is empty; need units, upcoming or excerpts")
+    return {"course": course, "term": str(raw.get("term", "")).strip()[:30],
+            "units": units, "upcoming": upcoming, "excerpts": excerpts}
 
 
 def check_server(server):
@@ -146,6 +198,33 @@ def cmd_results(args):
     print(json.dumps(res, separators=(",", ":"))[:MAX_OUTPUT])
 
 
+def cmd_inbox(args):
+    state = load_state()
+    gid, g = pick_group(state, args.group)
+    res = call("GET", f"{g['server']}/api/member/inbox", token=g["token"])
+    messages = res.get("messages", [])
+    if not messages:
+        print("NO_UPDATES")
+        return
+    print(json.dumps(messages, separators=(",", ":"))[:MAX_OUTPUT])
+
+
+def cmd_course(args):
+    state = load_state()
+    gid, g = pick_group(state, args.group)
+    pack = clean_pack(args.pack)
+    res = call("PUT", f"{g['server']}/api/course-pack", {"pack": pack}, g["token"])
+    print(f"Shared {pack['course']} course pack with {g['name']}: {len(pack['units'])} units, "
+          f"{len(pack['upcoming'])} upcoming, {len(pack['excerpts'])} excerpts (version {res.get('version', '?')}).")
+
+
+def cmd_deck(args):
+    state = load_state()
+    gid, g = pick_group(state, args.group)
+    res = call("GET", f"{g['server']}/api/member/deck", token=g["token"])
+    print(json.dumps(res, separators=(",", ":"))[:MAX_OUTPUT])
+
+
 def cmd_leave(args):
     state = load_state()
     gid, g = pick_group(state, args.group)
@@ -173,12 +252,15 @@ def main():
     u = sub.add_parser("update")
     u.add_argument("--profile", required=True)
     u.add_argument("--group")
-    for name in ("results", "leave"):
+    for name in ("results", "inbox", "deck", "leave"):
         sub.add_parser(name).add_argument("--group")
+    c = sub.add_parser("course")
+    c.add_argument("--pack", required=True)
+    c.add_argument("--group")
     sub.add_parser("list")
     args = p.parse_args()
-    {"join": cmd_join, "update": cmd_update, "results": cmd_results,
-     "leave": cmd_leave, "list": cmd_list}[args.cmd](args)
+    {"join": cmd_join, "update": cmd_update, "results": cmd_results, "inbox": cmd_inbox,
+     "course": cmd_course, "deck": cmd_deck, "leave": cmd_leave, "list": cmd_list}[args.cmd](args)
 
 
 if __name__ == "__main__":

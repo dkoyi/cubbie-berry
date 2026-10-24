@@ -37,6 +37,47 @@ Error handling:
 - **Server unreachable:** "Group Cubbie looks offline right now. Try again later." Don't retry more than once.
 - **Server address rejected** (not on the allowed hosts): tell them the link looks wrong and ask them to copy it again from Discord.
 
+## Share the course pack (the group's Canvas context)
+
+Group Cubbie has no access to Canvas. You do. The course pack lets the group's quizzes follow what *this* class actually teaches. Only one linked member needs to share it. Others can add units later.
+
+Right after a successful join, offer once:
+
+> Want the group's quizzes to match your actual CSE 240 class? I'd share the unit outline, upcoming exam dates and short excerpts from lecture materials. No grades, no submissions, no assignment answers.
+
+If they say yes:
+
+1. **Read their Canvas** for that course: modules and pages, lecture files, the syllabus, and upcoming quizzes and exams with dates.
+2. **Write `pack.json`:**
+
+   ```json
+   {"course": "CSE 240", "term": "Fall 2026",
+    "units": [{"title": "Unit 4: Memory", "topics": ["caches", "TLB"], "summary": "≤600 chars", "source": "Lecture 9 slides"}],
+    "upcoming": [{"title": "Midterm 2", "type": "exam", "due": "2026-10-30", "covers": ["caches", "TLB"]}],
+    "excerpts": [{"topic": "caches", "text": "≤2000 chars, quoted from the material", "source": "Lecture 9, slide 12"}]}
+   ```
+
+   Limits: at most 12 units, 10 upcoming items, and 10 excerpts (about 20k characters in total). Use the exact topic names the course uses.
+3. **Never include** grades, submissions, rubrics, the text of open graded assignments, or answers to them. Write `covers` as topic names only.
+4. **Preview it in one message** ("8 units, 2 upcoming exams, 6 excerpts from lectures 7–12"), and run it only after they say yes: `python3 scripts/groupsync.py course --pack pack.json`.
+
+## Put the group's deck on Kahoot or Quizlet
+
+The group's deck lives on Group Cubbie. Run `python3 scripts/groupsync.py deck` to get it, then use whichever option the student wants.
+
+- **Kahoot:**
+  1. Create an Excel file in Kahoot's spreadsheet-import format: question ≤120 characters, 4 answers of ≤75 characters each, a time limit, and the number of the correct answer.
+  2. Open kahoot.com in your browser. The student signs in by taking over the browser.
+  3. Go to Create → Import spreadsheet, upload the file, and name the kahoot "<course> <topics>".
+  4. **Ask before saving or publishing.** Then send the student the link to host it.
+- **Quizlet:**
+  1. Create the paste-ready import text: one `question<TAB>answer` line per card.
+  2. Open quizlet.com in your browser. The student signs in by taking over the browser.
+  3. Create a set → Import, paste the text, and title it.
+  4. **Ask before saving.** Then send the link.
+
+If the site's layout changed or the import fails, send the student the file or the text along with the 3 steps to import it themselves.
+
 ## Keep the group current (ask first)
 
 After a solo quiz where the weak topics changed, or when a new exam date shows up, offer:
@@ -54,6 +95,27 @@ Then:
 1. Tell them their score and their weakest topic, privately, in 1–2 messages.
 2. Update their remembered weak topics.
 3. Offer a 2-minute solo drill on that topic now. If an exam is coming, offer the nightly drill too.
+
+## Updates from the group (Group Cubbie → you)
+
+Group Cubbie can't message you directly. It leaves messages in the student's inbox on its server, and you pick them up.
+
+**Set up the check-in.** Right after a successful join, offer once:
+
+> Want me to check <group> for updates every evening? I'd suggest 6 pm. I'll only text you if there's something new.
+
+If they say yes, create a daily scheduled check-in at the time they pick. The check-in runs `python3 scripts/groupsync.py inbox`. If it prints `NO_UPDATES`, send the student nothing.
+
+**On demand.** Also run the inbox when the student asks "any group updates?" or "what's my group doing?".
+
+Each message has a `kind`. Handle each one in 1–2 short messages:
+
+- **`session`** (`{when, where, course}`): "Study session Thu 7 pm, <where>. Add it to your calendar and remind you at 6?" Add it to Google Calendar and set the reminder only after they say yes. If it's an early exam-day session, offer a wake-up call too.
+- **`results`**: tell them a group game finished and they can say "how did I do?". Or, if they asked for results automatically, run `results` and follow "After a group game".
+- **`nudge`** (`{question, choices, answer_index, explanation, topic}`): send the question as a one-question quiz. Then reply ✅ or ❌ with the explanation, and update their remembered weak topics.
+- **`deck`** (`{topics, exam}`): "Your group's new quiz covers <topics>. Want a 3-question warm-up first?"
+- **`pack_request`** (`{course, unit, reason}`): the group wants material you haven't shared. Ask: "Your group is quizzing on <unit>. Share that unit from Canvas?" Only if they say yes, add that unit to the pack and share it as described in "Share the course pack".
+- **Any other kind:** summarize the `text` field in one line.
 
 ## Leave
 

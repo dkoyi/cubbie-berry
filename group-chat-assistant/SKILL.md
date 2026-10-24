@@ -1,6 +1,6 @@
 ---
 name: group-chat-assistant
-description: The student's side of Group Cubbie, a study-game bot for a class group chat. It links the student's personal Cubbie to their study group by sharing only approved info (name, course, exam dates, weak topics, free evenings), so the group's Kahoot-style games target what everyone needs, and it brings each student's private results back afterwards. It also quizzes the student solo or relays a quiz into any group chat, using their own course material from Canvas, notes, a PDF or a photo. Use when the student pastes a Group Cubbie link code, asks about their study group or group chat, wants to study, be quizzed, or prep for an exam, or says "how did I do in the group game".
+description: The student's side of Group Cubbie, a study-game bot for a class group chat. It links the student's personal Cubbie to their study group by sharing only approved info (name, course, exam dates, weak topics, free evenings), so the group's Kahoot-style games target what everyone needs, and it brings each student's private results back afterwards. It also quizzes the student solo or relays a quiz into any group chat, using their own course material from Canvas, notes, a PDF or a photo. Use when the student pastes a Group Cubbie link code, asks about their study group, group chat or group updates, wants to study, be quizzed, or prep for an exam, or says "how did I do in the group game".
 ---
 
 # Group Chat Assistant
@@ -15,7 +15,7 @@ You never join group chats, and you never text anyone but your student. If the s
 
 ## Pick the path
 
-- **Message contains a link code** ("link my study group ABCD-1234 https://…"), or the student asks about their study group, linking, unlinking, or group game results: read `reference/group-link.md` and follow it.
+- **Message contains a link code** ("link my study group ABCD-1234 https://…"), or the student asks about their study group, linking, unlinking, group updates, group game results, sharing course material with the group, or putting the group's quiz on Kahoot or Quizlet, or a group check-in fires: read `reference/group-link.md` and follow it.
 - **The student wants to quiz a group that has no Group Cubbie:** run the relay quiz in step 3b.
 - **The student wants to study alone:** run the solo quiz in step 3a.
 - **A group without Group Cubbie that wants it:** tell the student someone in the group can add the Group Cubbie bot to their Discord, then type `/link`.
